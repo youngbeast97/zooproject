@@ -4,65 +4,71 @@ import com.zoo.zoo.exceptions.employee.EmployeeWithIDNotFoundException;
 import com.zoo.zoo.model.employee.*;
 import com.zoo.zoo.repository.employee.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class EmployeeService {
 
+    private static final String EMPLOYEES_CACHE = "employeesCache";
+
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
 
+    @Transactional
     public EmployeeResponse create(EmployeeRequest request) {
-        Employee employee = employeeMapper.toEntity(request);
-        employeeRepository.save(employee);
-        return employeeMapper.toResponse(employee);
+        Employee saved = employeeRepository.save(employeeMapper.toEntity(request));
+        return employeeMapper.toResponse(saved);
     }
 
-
-
+    @Transactional(readOnly = true)
     public List<EmployeeResponse> getAll() {
-        return employeeRepository.findAll()
-                .stream()
-                .map(employeeMapper::toResponse)
-                .toList();
+        return toResponses(employeeRepository.findAll());
     }
 
-    // CacheEvict - usuwa wpis
-    // CachePut - nadpisuje wpis nowa wartoscia
-    @Cacheable(value = "employeesCache", key = "#id", sync = true) // zapisuje jesli brak
+    @Transactional(readOnly = true)
+    @Cacheable(value = EMPLOYEES_CACHE, key = "#id", sync = true)
     public EmployeeResponse getById(Long id) {
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new EmployeeWithIDNotFoundException("Employee not found"));
-        return employeeMapper.toResponse(employee);
+        return employeeMapper.toResponse(findEmployeeOrThrow(id));
     }
 
-
+    @Transactional
+    @CacheEvict(value = EMPLOYEES_CACHE, key = "#id")
     public void delete(Long id) {
         if (!employeeRepository.existsById(id)) {
-            throw new EmployeeWithIDNotFoundException("Employee not found");
+            throw new EmployeeWithIDNotFoundException("Employee with id " + id + " not found");
         }
         employeeRepository.deleteById(id);
     }
 
+    @Transactional
+    @CacheEvict(value = EMPLOYEES_CACHE, allEntries = true)
     public void deleteAll() {
         employeeRepository.deleteAll();
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeResponse> getByType(EmployeeType type) {
-        return employeeRepository.findByEmployeeType(type)
-                .stream()
-                .map(employeeMapper::toResponse)
-                .toList();
+        return toResponses(employeeRepository.findByEmployeeType(type));
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeResponse> searchByName(String name) {
-        return employeeRepository.findByNameContainingIgnoreCase(name)
-                .stream()
+        return toResponses(employeeRepository.findByNameContainingIgnoreCase(name));
+    }
+
+    private Employee findEmployeeOrThrow(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeWithIDNotFoundException("Employee with id " + id + " not found"));
+    }
+
+    private List<EmployeeResponse> toResponses(List<Employee> employees) {
+        return employees.stream()
                 .map(employeeMapper::toResponse)
                 .toList();
     }
-
 }
