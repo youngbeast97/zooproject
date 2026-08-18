@@ -10,59 +10,59 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class EmployeeService {
+
+    private static final String CACHE = "employeesCache";
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
 
+    @Transactional
     public EmployeeResponse create(EmployeeRequest request) {
-        Employee employee = employeeMapper.toEntity(request);
-        employeeRepository.save(employee);
-        return employeeMapper.toResponse(employee);
+        Employee saved = employeeRepository.save(employeeMapper.toEntity(request));
+        return employeeMapper.toResponse(saved);
     }
-
-
 
     public List<EmployeeResponse> getAll() {
-        return employeeRepository.findAll()
-                .stream()
-                .map(employeeMapper::toResponse)
-                .toList();
+        return toResponses(employeeRepository.findAll());
     }
 
-    // CacheEvict - usuwa wpis
-    // CachePut - nadpisuje wpis nowa wartoscia
-    @Cacheable(value = "employeesCache", key = "#id", sync = true) // zapisuje jesli brak
+    @Cacheable(value = CACHE, key = "#id", sync = true)
     public EmployeeResponse getById(Long id) {
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new EmployeeWithIDNotFoundException("Employee not found"));
-        return employeeMapper.toResponse(employee);
+        return employeeMapper.toResponse(findEntityById(id));
     }
 
-
+    @Transactional
+    @CacheEvict(value = CACHE, key = "#id")
     public void delete(Long id) {
-        if (!employeeRepository.existsById(id)) {
-            throw new EmployeeWithIDNotFoundException("Employee not found");
-        }
-        employeeRepository.deleteById(id);
+        Employee employee = findEntityById(id);
+        employeeRepository.delete(employee);
     }
 
+    @Transactional
+    @CacheEvict(value = CACHE, allEntries = true)
     public void deleteAll() {
         employeeRepository.deleteAll();
     }
 
     public List<EmployeeResponse> getByType(EmployeeType type) {
-        return employeeRepository.findByEmployeeType(type)
-                .stream()
-                .map(employeeMapper::toResponse)
-                .toList();
+        return toResponses(employeeRepository.findByEmployeeType(type));
     }
 
     public List<EmployeeResponse> searchByName(String name) {
-        return employeeRepository.findByNameContainingIgnoreCase(name)
-                .stream()
+        return toResponses(employeeRepository.findByNameContainingIgnoreCase(name));
+    }
+
+    private Employee findEntityById(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeWithIDNotFoundException(
+                        "Employee not found, id=" + id));
+    }
+
+    private List<EmployeeResponse> toResponses(Collection<Employee> employees) {
+        return employees.stream()
                 .map(employeeMapper::toResponse)
                 .toList();
     }
-
 }
