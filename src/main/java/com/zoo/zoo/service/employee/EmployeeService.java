@@ -27,7 +27,10 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public List<EmployeeResponse> getAll() {
-        return toResponses(employeeRepository.findAll());
+        List<Employee> employees = employeeRepository.findAll().stream()
+                .filter(employee -> employee.getName() != null)
+                .toList();
+        return toResponses(employees);
     }
 
     @Transactional(readOnly = true)
