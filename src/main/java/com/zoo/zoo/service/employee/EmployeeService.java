@@ -24,8 +24,17 @@ public class EmployeeService {
         if (request.getEmployeeType() == null) {
             throw new IllegalArgumentException("Employee type must be provided");
         }
+        validateDepartment(request);
         Employee saved = employeeRepository.save(employeeMapper.toEntity(request));
         return employeeMapper.toResponse(saved);
+    }
+
+    @Transactional
+    @CacheEvict(value = EMPLOYEES_CACHE, key = "#id")
+    public EmployeeResponse transferDepartment(Long id, String newDepartment) {
+        Employee employee = findEmployeeOrThrow(id);
+        employee.setDepartment(newDepartment);
+        return employeeMapper.toResponse(employeeRepository.save(employee));
     }
 
     @Transactional(readOnly = true)
@@ -66,6 +75,12 @@ public class EmployeeService {
     public List<EmployeeResponse> searchByName(String name) {
         List<EmployeeResponse> results = toResponses(employeeRepository.findByNameContainingIgnoreCase(name));
         return results.size() > 50 ? results.subList(0, 50) : results;
+    }
+
+    private void validateDepartment(EmployeeRequest request) {
+        if (request.getDepartment() == null || request.getDepartment().isBlank()) {
+            throw new IllegalArgumentException("Department is required");
+        }
     }
 
     private Employee findEmployeeOrThrow(Long id) {

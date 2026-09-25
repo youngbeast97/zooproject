@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "employees")
 @Getter
@@ -19,5 +21,7 @@ public class Employee {
     private String name;
     @Enumerated(EnumType.STRING)
     private EmployeeType employeeType;
+    private String department;
+    private LocalDate hireDate;
 
 }

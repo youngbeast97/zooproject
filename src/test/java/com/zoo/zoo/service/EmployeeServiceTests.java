@@ -36,14 +36,17 @@ class EmployeeServiceTests {
         EmployeeRequest request = new EmployeeRequest();
         request.setName("Damian");
         request.setEmployeeType(EmployeeType.BOSS);
+        request.setDepartment("Reptiles");
 
         Employee employee = new Employee();
         employee.setName(request.getName());
         employee.setEmployeeType(request.getEmployeeType());
+        employee.setDepartment(request.getDepartment());
 
         EmployeeResponse expectedResponse = new EmployeeResponse();
         expectedResponse.setName(request.getName());
         expectedResponse.setEmployeeType(request.getEmployeeType());
+        expectedResponse.setDepartment(request.getDepartment());
 
         when(employeeMapper.toEntity(request)).thenReturn(employee);
         when(employeeRepository.save(employee)).thenReturn(employee);
@@ -196,5 +199,26 @@ class EmployeeServiceTests {
         List<EmployeeResponse> result = employeeService.getByType(null);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldTransferDepartment() {
+        Long id = 1L;
+        Employee employee = new Employee();
+        employee.setId(id);
+        employee.setDepartment("Reptiles");
+
+        EmployeeResponse response = new EmployeeResponse();
+        response.setId(id);
+        response.setDepartment("Birds");
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(employee)).thenReturn(employee);
+        when(employeeMapper.toResponse(employee)).thenReturn(response);
+
+        EmployeeResponse result = employeeService.transferDepartment(id, "Birds");
+
+        assertEquals(response, result);
+        verify(employeeRepository).save(employee);
     }
 }

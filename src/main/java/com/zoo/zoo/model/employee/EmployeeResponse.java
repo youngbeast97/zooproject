@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -14,5 +16,7 @@ public class EmployeeResponse {
     private Long id;
     private String name;
     private EmployeeType employeeType;
+    private String department;
+    private LocalDate hireDate;
 
 }

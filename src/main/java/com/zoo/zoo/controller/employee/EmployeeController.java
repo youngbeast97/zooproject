@@ -26,6 +26,11 @@ public class EmployeeController {
     return ResponseEntity.status(201).body(employeeService.create(request));
     }
 
+    @PatchMapping("/{id}/department")
+    public EmployeeResponse transferDepartment(@PathVariable Long id, @RequestParam String department) {
+        return employeeService.transferDepartment(id, department);
+    }
+
     @GetMapping("/get-all-employees")
     public List<EmployeeResponse> getAll() {
         return employeeService.getAll();

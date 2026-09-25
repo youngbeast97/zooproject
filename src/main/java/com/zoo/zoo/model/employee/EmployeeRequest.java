@@ -15,5 +15,7 @@ public class EmployeeRequest {
     @NotBlank(message="Name cannot be empty")
     private String name;
     private EmployeeType employeeType;
+    @NotBlank(message = "Department is required")
+    private String department;
 
 }
