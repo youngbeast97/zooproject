@@ -21,6 +21,9 @@ public class EmployeeService {
 
     @Transactional
     public EmployeeResponse create(EmployeeRequest request) {
+        if (request.getEmployeeType() == null) {
+            throw new IllegalArgumentException("Employee type must be provided");
+        }
         Employee saved = employeeRepository.save(employeeMapper.toEntity(request));
         return employeeMapper.toResponse(saved);
     }
@@ -61,7 +64,8 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public List<EmployeeResponse> searchByName(String name) {
-        return toResponses(employeeRepository.findByNameContainingIgnoreCase(name));
+        List<EmployeeResponse> results = toResponses(employeeRepository.findByNameContainingIgnoreCase(name));
+        return results.size() > 50 ? results.subList(0, 50) : results;
     }
 
     private Employee findEmployeeOrThrow(Long id) {

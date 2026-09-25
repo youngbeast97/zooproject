@@ -56,4 +56,9 @@ public class EmployeeController {
     public List<EmployeeResponse> searchByName(@RequestParam String name) {
         return employeeService.searchByName(name);
     }
+
+    @GetMapping("/count")
+    public long count() {
+        return employeeService.getAll().size();
+    }
 }
