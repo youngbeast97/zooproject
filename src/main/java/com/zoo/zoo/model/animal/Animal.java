@@ -25,11 +25,14 @@ public abstract class Animal {
     private boolean isRequiresLight=false;//domyslnie zwierzak nie potrzebuje lampy grzewczej
     public abstract boolean canBeFed(LocalDate currentDate);
 
-    public Double calculateCurrentHumidity(){
-        if(lastHumidityRefillDate==null)return 0.0;
-        long daysPassed= ChronoUnit.DAYS.between(lastHumidityRefillDate,LocalDate.now());
-        double currentHumidity =100.0-daysPassed;
-        return Math.max(0.0,currentHumidity);
+    // HINT: The reference date is now passed in by the caller instead of reading the clock here,
+    // HINT: so the result is deterministic in tests. Any other change to how humidity is computed
+    // HINT: must still work with this signature - search for every caller of this method afterwards.
+    public Double calculateCurrentHumidity(LocalDate today) {
+        if (lastHumidityRefillDate == null) return 0.0;
+        long daysPassed = ChronoUnit.DAYS.between(lastHumidityRefillDate, today);
+        double currentHumidity = 100.0 - daysPassed;
+        return Math.max(0.0, currentHumidity);
     }
 
 }

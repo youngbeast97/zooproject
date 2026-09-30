@@ -21,10 +21,13 @@ public class HumidityService {
         Animal animal = animalRepository.findById(animalId)
                 .orElseThrow(() -> new AnimalWithIDNotFoundException("Animal not found"));
 
-        if (animal.calculateCurrentHumidity() >= 100.0) {
+        // HINT: One "today" is captured per request and used for both the check and the new refill date,
+        // HINT: so both decisions are based on the same day even around midnight.
+        LocalDate today = LocalDate.now();
+        if (animal.calculateCurrentHumidity(today) >= 100.0) {
             throw new HumidityRefillException("Humidity is already 100%");
         }
-        animal.setLastHumidityRefillDate(LocalDate.now());
+        animal.setLastHumidityRefillDate(today);
         animalRepository.save(animal);
     }
 }

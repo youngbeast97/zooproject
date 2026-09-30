@@ -1,6 +1,7 @@
 package com.zoo.zoo.model.animal;
 
 import org.springframework.stereotype.Component;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +87,7 @@ public class AnimalMapper {
         return response;
     }
     private void fillCommonFields(AnimalResponse response, Animal animal, String type) {
-        Double freshHumidity = animal.calculateCurrentHumidity();
+        Double freshHumidity = animal.calculateCurrentHumidity(LocalDate.now());
 
         animal.setHumidity(freshHumidity);
 
