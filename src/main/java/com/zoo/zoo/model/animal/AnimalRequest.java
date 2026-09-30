@@ -1,7 +1,7 @@
 package com.zoo.zoo.model.animal;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,12 +16,14 @@ import java.time.LocalDate;
 @AllArgsConstructor
 
 public class AnimalRequest {
-    // HINT: Enclosure labels are printed on a fixed-width plate - long names get cut off.
+    // HINT: The keeper app shows names on enclosure labels; think about what a sensible
+    // HINT: length range is and whether a one-letter name should ever be accepted.
     @NotBlank(message = "Name cannot be empty")
-    @Size(max = 30, message = "Name must be at most 30 characters")
+    @Size(min = 2, max = 40, message = "Name must be between 2 and 40 characters")
     private String name;
-    // HINT: Species names are copied from the vet registry: letters (incl. Polish ones) and spaces only.
     @NotBlank(message = "Species cannot be empty")
+    @Size(max = 60, message = "Species must be at most 60 characters")
+    // HINT: Species names are copied from the vet registry: letters (incl. Polish ones) and spaces only.
     @Pattern(regexp = "^[\\p{L} ]+$", message = "Species may contain only letters and spaces")
     private String species;
     private boolean requiresLight;
