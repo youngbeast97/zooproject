@@ -1,6 +1,7 @@
 package com.zoo.zoo.service;
 
 import com.zoo.zoo.exceptions.animal.AnimalWithIDNotFoundException;
+import com.zoo.zoo.exceptions.animal.DuplicateAnimalException;
 import com.zoo.zoo.exceptions.animal.WeightRequiredForBigReptileException;
 import com.zoo.zoo.model.animal.*;
 import com.zoo.zoo.repository.animal.AnimalRepository;
@@ -244,5 +245,34 @@ class AnimalServiceTests {
         req.setName("Gienek");
         Spider result = localMapper.toSpider(req);
         assertEquals("Gienek", result.getName());
+    }
+
+    @Test
+    void shouldRejectDuplicateNameWithinSpecies() {
+        AnimalRequest request = new AnimalRequest();
+        request.setName("Tuptuś");
+        request.setSpecies("Ptasznik");
+        when(animalRepository.existsByNameIgnoreCaseAndSpeciesIgnoreCase("Tuptuś", "Ptasznik")).thenReturn(true);
+
+        assertThrows(DuplicateAnimalException.class, () -> animalService.createSpider(request));
+        verify(animalRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldForceHeatLampForVenomousReptile() {
+        AnimalWithWeightRequest request = new AnimalWithWeightRequest();
+        request.setName("Kobra");
+        request.setSpecies("Kobra krolewska");
+        request.setRequiresLight(false);
+        VenomousReptile cobra = new VenomousReptile();
+        AnimalWithWeightResponse response = new AnimalWithWeightResponse();
+
+        when(animalMapper.toVenomousReptile(request)).thenReturn(cobra);
+        when(animalRepository.save(cobra)).thenReturn(cobra);
+        when(animalMapper.territoryToResponse(cobra)).thenReturn(response);
+
+        animalService.createVenomousReptile(request);
+
+        assertTrue(cobra.isRequiresLight());
     }
 }
