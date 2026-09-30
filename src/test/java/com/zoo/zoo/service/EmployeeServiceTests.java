@@ -68,24 +68,25 @@ class EmployeeServiceTests {
         response.setName("Adam");
         List<Employee> employees = List.of(employee);
 
-        when(employeeRepository.findAll()).thenReturn(employees);
+        // HINT: This stub must match the repository call that EmployeeService.getAll() makes after your merge.
+        when(employeeRepository.findByActiveTrue()).thenReturn(employees);
         when(employeeMapper.toResponse(employee)).thenReturn(response);
 
         List<EmployeeResponse> result = employeeService.getAll();
 
         assertEquals(1, result.size());
         assertEquals(response, result.get(0));
-        verify(employeeRepository).findAll();
+        verify(employeeRepository).findByActiveTrue();
     }
 
     @Test
     void shouldReturnEmptyListWhenNoEmployeesExist() {
-        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+        when(employeeRepository.findByActiveTrue()).thenReturn(Collections.emptyList());
 
         List<EmployeeResponse> result = employeeService.getAll();
 
         assertTrue(result.isEmpty());
-        verify(employeeRepository).findAll();
+        verify(employeeRepository).findByActiveTrue();
         verifyNoInteractions(employeeMapper);
     }
 
@@ -96,45 +97,47 @@ class EmployeeServiceTests {
         employee.setId(id);
         EmployeeResponse response = new EmployeeResponse();
 
-        when(employeeRepository.findById(id)).thenReturn(Optional.of(employee));
+        when(employeeRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(employee));
         when(employeeMapper.toResponse(employee)).thenReturn(response);
 
         EmployeeResponse result = employeeService.getById(id);
 
         assertEquals(response, result);
-        verify(employeeRepository).findById(id);
+        verify(employeeRepository).findByIdAndActiveTrue(id);
     }
 
     @Test
     void shouldThrowExceptionWhenEmployeeNotFound() {
         Long id = 1L;
-        when(employeeRepository.findById(id)).thenReturn(Optional.empty());
+        when(employeeRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.empty());
 
         assertThrows(EmployeeWithIDNotFoundException.class, () -> employeeService.getById(id));
 
-        verify(employeeRepository).findById(id);
+        verify(employeeRepository).findByIdAndActiveTrue(id);
         verify(employeeMapper, never()).toResponse(any());
     }
 
     @Test
-    void shouldDeleteEmployee() {
+    void shouldSoftDeleteEmployee() {
         Long id = 1L;
-        when(employeeRepository.existsById(id)).thenReturn(true);
+        Employee employee = new Employee();
+        employee.setId(id);
+        when(employeeRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(employee));
 
         employeeService.delete(id);
 
-        verify(employeeRepository).existsById(id);
-        verify(employeeRepository).deleteById(id);
+        assertFalse(employee.isActive());
+        verify(employeeRepository).save(employee);
+        verify(employeeRepository, never()).deleteById(any());
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNotFoundEmployee() {
         Long id = 1L;
-        when(employeeRepository.existsById(id)).thenReturn(false);
+        when(employeeRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.empty());
 
         assertThrows(EmployeeWithIDNotFoundException.class, () -> employeeService.delete(id));
 
-        verify(employeeRepository).existsById(id);
         verify(employeeRepository, never()).deleteById(any());
     }
 
@@ -212,7 +215,7 @@ class EmployeeServiceTests {
         response.setId(id);
         response.setDepartment("Birds");
 
-        when(employeeRepository.findById(id)).thenReturn(Optional.of(employee));
+        when(employeeRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(employee));
         when(employeeRepository.save(employee)).thenReturn(employee);
         when(employeeMapper.toResponse(employee)).thenReturn(response);
 
@@ -224,7 +227,7 @@ class EmployeeServiceTests {
 
     @Test
     void shouldCountEmployeesInDatabaseWithoutLoadingThem() {
-        when(employeeRepository.countByNameIsNotNull()).thenReturn(42L);
+        when(employeeRepository.countByActiveTrueAndNameIsNotNull()).thenReturn(42L);
 
         long result = employeeService.count();
 
