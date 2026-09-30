@@ -1,6 +1,7 @@
 package com.zoo.zoo.service;
 
 import com.zoo.zoo.model.animal.AnimalRequest;
+import com.zoo.zoo.model.animal.AnimalWithWeightRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -87,5 +88,17 @@ class AnimalRequestValidationTests {
         assertEquals(1, violations.size());
         assertEquals("lastFeedingDate", violations.iterator().next().getPropertyPath().toString());
         assertEquals("species", violations.iterator().next().getPropertyPath().toString());
+    }
+
+    @Test
+    void shouldRequireWeightForWeightedAnimals() {
+        AnimalWithWeightRequest request = new AnimalWithWeightRequest();
+        request.setName("Kobra");
+        request.setSpecies("Kobra krolewska");
+
+        Set<ConstraintViolation<AnimalWithWeightRequest>> violations = validator.validate(request);
+
+        assertEquals(1, violations.size());
+        assertEquals("weightInGrams", violations.iterator().next().getPropertyPath().toString());
     }
 }
