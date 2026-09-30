@@ -231,4 +231,19 @@ class EmployeeServiceTests {
         assertEquals(42L, result);
         verify(employeeRepository, never()).findAll();
     }
+
+    @Test
+    void shouldReturnEmployeesOfDepartmentTrimmingInput() {
+        Employee employee = new Employee();
+        employee.setDepartment("Reptiles");
+        EmployeeResponse response = new EmployeeResponse();
+        response.setDepartment("Reptiles");
+
+        when(employeeRepository.findByDepartmentIgnoreCaseOrderByNameAsc("reptiles")).thenReturn(List.of(employee));
+        when(employeeMapper.toResponse(employee)).thenReturn(response);
+
+        List<EmployeeResponse> result = employeeService.getByDepartment("  reptiles ");
+
+        assertEquals(List.of(response), result);
+    }
 }
