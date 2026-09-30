@@ -7,6 +7,7 @@ import com.zoo.zoo.model.animal.*;
 import com.zoo.zoo.model.employee.Employee;
 import com.zoo.zoo.model.employee.EmployeeType;
 import com.zoo.zoo.model.feeding.FeedingRequest;
+import com.zoo.zoo.model.feeding.FeedingResponse;
 import com.zoo.zoo.model.feeding.FoodInventory;
 import com.zoo.zoo.model.feeding.FoodType;
 import com.zoo.zoo.repository.animal.AnimalRepository;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -28,10 +30,11 @@ public class FeedingService {
     private final EmployeeRepository employeeRepository;
     private final FoodInventoryRepository inventoryRepository;
     private final AuditService auditService;
-    private final AnimalMapper animalMapper;
 
     @Transactional
-    public AnimalResponse feedAnimal(Long animalId, FeedingRequest request) {
+    // HINT: Contract change - callers now get a FeedingResponse. Find every caller/test that still expects
+    // HINT: AnimalResponse (FeedingServiceTests, AnimalController) - including tests you did not touch.
+    public FeedingResponse feedAnimal(Long animalId, FeedingRequest request) {
         try {
             // 1. PODSTAWA PODSTAW CZY ZWIERZE KTORE CHCESZ NAKARMIC (O DANYM ID) WGL ISTNIEJE
             Animal animal = animalRepository.findById(animalId)
@@ -58,10 +61,22 @@ public class FeedingService {
             validateDietAndWeight(animal, request);
 
             //  JEŚLI DOSZLIŚMY TUTAJ, WSZYSTKO JEST CACY
-            inventory.setCurrentQuantity(inventory.getCurrentQuantity() - 1);
+            // HINT: remainingStock in the response must equal what is really left in the warehouse after
+            // HINT: this feeding. Re-check this if the amount consumed per feeding is no longer always 1.
+            int remainingStock = inventory.getCurrentQuantity() - 1;
+            inventory.setCurrentQuantity(remainingStock);
             animal.setLastFeedingDate(LocalDate.now());
+            Animal saved = animalRepository.save(animal);
 
-            return animalMapper.territoryToResponse(animalRepository.save(animal));
+            return FeedingResponse.builder()
+                    .animalId(saved.getId())
+                    .animalName(saved.getName())
+                    .fedByEmployeeId(employee.getId())
+                    .foodType(request.getFoodType())
+                    .foodWeightInGrams(request.getFoodWeightInGrams())
+                    .remainingStock(remainingStock)
+                    .fedAt(LocalDateTime.now())
+                    .build();
 
         } catch (FeedingFailedException e) {
             log.error("Feeding Failed {}", e.getMessage() );

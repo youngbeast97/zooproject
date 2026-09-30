@@ -5,12 +5,14 @@ import com.zoo.zoo.model.animal.AnimalResponse;
 import com.zoo.zoo.model.animal.AnimalWithWeightRequest;
 import com.zoo.zoo.model.animal.AnimalWithWeightResponse;
 import com.zoo.zoo.model.feeding.FeedingRequest;
+import com.zoo.zoo.model.feeding.FeedingResponse;
 import com.zoo.zoo.service.animal.AnimalService;
 import com.zoo.zoo.service.feeding.FeedingService;
 import com.zoo.zoo.service.humidity.HumidityService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,10 +84,13 @@ public class AnimalController {
         animalService.delete(id);
         return ResponseEntity.noContent().build();
     }
-    @PatchMapping("/{id}/feed-process")
-    public ResponseEntity<AnimalResponse> feedAnimal(
+    // HINT: API contract change: a feeding is a new resource (POST .../feedings -> 201), not a PATCH of the animal.
+    // HINT: Whatever was added to the old endpoint in the meantime (validation, params) must not get lost.
+    // HINT: Clients of the old path: check the Postman collection / frontend before removing it for good.
+    @PostMapping("/{id}/feedings")
+    public ResponseEntity<FeedingResponse> feedAnimal(
             @PathVariable Long id,
             @RequestBody FeedingRequest request) {
-        return ResponseEntity.ok(feedingService.feedAnimal(id, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(feedingService.feedAnimal(id, request));
     }
 }

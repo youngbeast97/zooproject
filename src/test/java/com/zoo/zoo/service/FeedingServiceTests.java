@@ -5,6 +5,7 @@ import com.zoo.zoo.model.animal.*;
 import com.zoo.zoo.model.employee.Employee;
 import com.zoo.zoo.model.employee.EmployeeType;
 import com.zoo.zoo.model.feeding.FeedingRequest;
+import com.zoo.zoo.model.feeding.FeedingResponse;
 import com.zoo.zoo.model.feeding.FoodInventory;
 import com.zoo.zoo.model.feeding.FoodType;
 import com.zoo.zoo.repository.animal.AnimalRepository;
@@ -29,7 +30,6 @@ class FeedingServiceTests {
     @Mock private EmployeeRepository employeeRepository;
     @Mock private FoodInventoryRepository inventoryRepository;
     @Mock private AuditService auditService;
-    @Mock private AnimalMapper animalMapper;
 
     @InjectMocks
     private FeedingService feedingService;
@@ -83,10 +83,12 @@ class FeedingServiceTests {
         when(inventoryRepository.findByFoodType(FoodType.CRICKET)).thenReturn(Optional.of(cricketInv));
         when(animalRepository.save(any())).thenReturn(spider);
 
-        feedingService.feedAnimal(1L, request);
+        FeedingResponse result = feedingService.feedAnimal(1L, request);
 
         verify(animalRepository).save(spider);
         assertEquals(9, cricketInv.getCurrentQuantity());
+        assertEquals(9, result.getRemainingStock());
+        assertEquals(10L, result.getFedByEmployeeId());
     }
 
 
@@ -96,19 +98,19 @@ class FeedingServiceTests {
         request.setFoodType(FoodType.MOUSE);
         request.setFoodWeightInGrams(100);
 
-        AnimalResponse expectedResponse = new AnimalResponse();
-        expectedResponse.setName("Cobra");
+        cobra.setName("Cobra");
 
         when(animalRepository.findById(2L)).thenReturn(Optional.of(cobra));
         when(employeeRepository.findById(11L)).thenReturn(Optional.of(boss));
         when(inventoryRepository.findByFoodType(FoodType.MOUSE)).thenReturn(Optional.of(mouseInv));
         when(animalRepository.save(any())).thenReturn(cobra);
-        when(animalMapper.territoryToResponse(cobra)).thenReturn(expectedResponse);
 
-        AnimalResponse result = feedingService.feedAnimal(2L, request);
+        FeedingResponse result = feedingService.feedAnimal(2L, request);
 
         assertNotNull(result);
-        assertEquals("Cobra", result.getName());
+        assertEquals("Cobra", result.getAnimalName());
+        assertEquals(FoodType.MOUSE, result.getFoodType());
+        assertEquals(100, result.getFoodWeightInGrams());
         assertEquals(9, mouseInv.getCurrentQuantity());
         assertEquals(LocalDate.now(), cobra.getLastFeedingDate());
         verify(animalRepository).save(cobra);
