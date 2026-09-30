@@ -77,6 +77,7 @@ class FoodSupplyServiceTests {
         foodSupplyService.restockFood();
 
         assertEquals(50, item.getCurrentQuantity());
+        assertEquals(LocalDate.now(), item.getLastRestockDate());
         verify(inventoryRepository).saveAll(anyList());
     }
 }

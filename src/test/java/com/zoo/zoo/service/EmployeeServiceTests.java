@@ -68,24 +68,25 @@ class EmployeeServiceTests {
         response.setName("Adam");
         List<Employee> employees = List.of(employee);
 
-        when(employeeRepository.findAll()).thenReturn(employees);
+        when(employeeRepository.findAllByNameIsNotNull()).thenReturn(employees);
         when(employeeMapper.toResponse(employee)).thenReturn(response);
 
         List<EmployeeResponse> result = employeeService.getAll();
 
         assertEquals(1, result.size());
         assertEquals(response, result.get(0));
-        verify(employeeRepository).findAll();
+        verify(employeeRepository).findAllByNameIsNotNull();
+        verify(employeeRepository, never()).findAll();
     }
 
     @Test
     void shouldReturnEmptyListWhenNoEmployeesExist() {
-        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+        when(employeeRepository.findAllByNameIsNotNull()).thenReturn(Collections.emptyList());
 
         List<EmployeeResponse> result = employeeService.getAll();
 
         assertTrue(result.isEmpty());
-        verify(employeeRepository).findAll();
+        verify(employeeRepository).findAllByNameIsNotNull();
         verifyNoInteractions(employeeMapper);
     }
 
@@ -230,5 +231,37 @@ class EmployeeServiceTests {
 
         assertEquals(42L, result);
         verify(employeeRepository, never()).findAll();
+    }
+
+    @Test
+    void shouldReturnEmployeesHiredAfterDate() {
+        java.time.LocalDate date = java.time.LocalDate.of(2026, 1, 1);
+        Employee employee = new Employee();
+        EmployeeResponse response = new EmployeeResponse();
+
+        when(employeeRepository.findByHireDateAfterOrderByHireDateAsc(date)).thenReturn(List.of(employee));
+        when(employeeMapper.toResponse(employee)).thenReturn(response);
+
+        assertEquals(List.of(response), employeeService.getHiredAfter(date));
+    }
+
+    @Test
+    void shouldReturnVeteransHiredBeforeCutoff() {
+        Employee veteran = new Employee();
+        EmployeeResponse response = new EmployeeResponse();
+        java.time.LocalDate cutoff = java.time.LocalDate.now().minusMonths(24);
+
+        when(employeeRepository.findByHireDateBeforeOrderByHireDateAsc(cutoff)).thenReturn(List.of(veteran));
+        when(employeeMapper.toResponse(veteran)).thenReturn(response);
+
+        assertEquals(List.of(response), employeeService.getVeterans(24));
+    }
+
+    @Test
+    void shouldCountFullMonthsOfService() {
+        Employee employee = new Employee();
+        employee.setHireDate(java.time.LocalDate.of(2024, 1, 15));
+
+        assertEquals(25, employee.monthsOfService(java.time.LocalDate.of(2026, 2, 20)));
     }
 }

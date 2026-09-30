@@ -2,6 +2,8 @@ package com.zoo.zoo.service;
 
 import com.zoo.zoo.exceptions.humidity.HumidityRefillException;
 import com.zoo.zoo.exceptions.animal.AnimalWithIDNotFoundException;
+import com.zoo.zoo.model.animal.AnimalMapper;
+import com.zoo.zoo.model.animal.AnimalResponse;
 import com.zoo.zoo.model.animal.Spider;
 import com.zoo.zoo.repository.animal.AnimalRepository;
 import com.zoo.zoo.service.humidity.HumidityService;
@@ -12,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,6 +25,9 @@ class HumidityServiceTests {
 
     @Mock
     private AnimalRepository animalRepository;
+
+    @Mock
+    private AnimalMapper animalMapper;
 
     @InjectMocks
     private HumidityService humidityService;
@@ -110,5 +116,19 @@ class HumidityServiceTests {
 
         assertThrows(HumidityRefillException.class, () -> humidityService.refillHumidity(1L));
         verify(animalRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldListOnlyAnimalsBelowHumidityThreshold() {
+        Spider dry = new Spider();
+        dry.setLastHumidityRefillDate(LocalDate.now().minusDays(70));
+        Spider wet = new Spider();
+        wet.setLastHumidityRefillDate(LocalDate.now().minusDays(5));
+        AnimalResponse dryResponse = new AnimalResponse();
+
+        when(animalRepository.findAll()).thenReturn(List.of(dry, wet));
+        when(animalMapper.toResponseList(List.of(dry))).thenReturn(List.of(dryResponse));
+
+        assertEquals(List.of(dryResponse), humidityService.findAnimalsNeedingRefill(50.0));
     }
 }

@@ -42,8 +42,10 @@ public class FeedingService {
             FoodInventory inventory = inventoryRepository.findByFoodType(request.getFoodType())
                     .orElseThrow(() -> new FoodTypeNotFoundException("FOOD_NOT_IN_WAREHOUSE"));
 
-            if (inventory.getCurrentQuantity() <= 0) {
-                throw new FoodTypeNotFoundException("OUT_OF_STOCK: " + request.getFoodType());
+            // HINT: Stock is counted in portions - a feeding needs as many units as it has portions.
+            if (inventory.getCurrentQuantity() < request.getPortions()) {
+                throw new FoodTypeNotFoundException(String.format("OUT_OF_STOCK: %s (requested %d, available %d)",
+                        request.getFoodType(), request.getPortions(), inventory.getCurrentQuantity()));
             }
 
             // SPRAWDZANIE CZY ODPOWIEDNI PRACOWNIK SIE ZABIERA ZA ROBOTE
@@ -58,7 +60,7 @@ public class FeedingService {
             validateDietAndWeight(animal, request);
 
             //  JEŚLI DOSZLIŚMY TUTAJ, WSZYSTKO JEST CACY
-            inventory.setCurrentQuantity(inventory.getCurrentQuantity() - 1);
+            inventory.setCurrentQuantity(inventory.getCurrentQuantity() - request.getPortions());
             animal.setLastFeedingDate(LocalDate.now());
 
             return animalMapper.territoryToResponse(animalRepository.save(animal));
@@ -86,12 +88,16 @@ public class FeedingService {
         if (animal instanceof VenomousReptile && role != EmployeeType.BOSS) {
             throw new IncorrectEmployeeFeedingException("UNAUTHORIZED: Only BOSS can feed venomous reptiles!");
         }
-        if (animal instanceof BigReptile && role == EmployeeType.STUDENT) {
+        if (animal instanceof BigReptile && (role == EmployeeType.STUDENT || role == EmployeeType.INTERN)) {
             throw new IncorrectEmployeeFeedingException("UNAUTHORIZED: Students cannot feed big reptiles!");
+        }
+        // HINT: Interns may feed spiders only - not even small reptiles.
+        if (role == EmployeeType.INTERN && !(animal instanceof Spider)) {
+            throw new IncorrectEmployeeFeedingException("UNAUTHORIZED: Interns may only feed spiders!");
         }
     }
     private void validateDietAndWeight(Animal animal, FeedingRequest request) {
-        List<FoodType> insects = List.of(FoodType.COCKROACH, FoodType.CRICKET, FoodType.MEALWORM);
+        List<FoodType> insects = List.of(FoodType.COCKROACH, FoodType.CRICKET, FoodType.MEALWORM, FoodType.LOCUST);
         List<FoodType> meat = List.of(FoodType.MOUSE, FoodType.RAT, FoodType.CHICKEN, FoodType.RABBIT);
 
         if (animal instanceof Spider || animal instanceof SmallReptile) {
@@ -105,15 +111,22 @@ public class FeedingService {
             throw new IncorrectFoodMatchedToAnimal("Large/Venomous reptiles require meat not worms!");
         }
 
+        // HINT: The body-mass rule applies to the TOTAL amount eaten in one feeding (all portions together).
+        // HINT: Vet recommendation 2026-09: venomous reptiles get 5-12%, all other weighed animals keep 8-15%.
         Integer animalWeight = getAnimalWeight(animal);
         if (animalWeight > 0) {
-            double min = animalWeight * 0.08;
-            double max = animalWeight * 0.15;
+            boolean venomous = animal instanceof VenomousReptile;
+            double minRatio = venomous ? 0.05 : 0.08;
+            double maxRatio = venomous ? 0.12 : 0.15;
+            double min = animalWeight * minRatio;
+            double max = animalWeight * maxRatio;
+            int totalWeight = request.getFoodWeightInGrams() * request.getPortions();
 
-            if (request.getFoodWeightInGrams() < min || request.getFoodWeightInGrams() > max) {
+            if (totalWeight < min || totalWeight > max) {
                 throw new IncorrectWeightOfFoodException(String.format(
-                        "Food (%dg) must be 8-15%% of animal mass (%dg). Range: [%.0fg - %.0fg]",
-                        request.getFoodWeightInGrams(), animalWeight, min, max));
+                        "Food (%d x %dg = %dg) must be %.0f-%.0f%% of animal mass (%dg). Range: [%.0fg - %.0fg]",
+                        request.getPortions(), request.getFoodWeightInGrams(), totalWeight,
+                        minRatio * 100, maxRatio * 100, animalWeight, min, max));
             }
         }
     }

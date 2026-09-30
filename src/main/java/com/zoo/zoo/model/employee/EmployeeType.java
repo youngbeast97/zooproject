@@ -9,5 +9,7 @@ import lombok.Getter;
 public enum EmployeeType {
     STUDENT, //spiders,small reptiles
     EXPERIENCED, //+big reptiles
-    BOSS //+venomous
+    BOSS, //+venomous
+    // HINT: New role from the internship programme - the LEAST privileged one: spiders only, always supervised.
+    INTERN //spiders only
 }

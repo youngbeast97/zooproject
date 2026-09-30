@@ -19,4 +19,6 @@ public class AnimalResponse {
     private LocalDate lastFeedingDate;
     private String type;
     private String lightStatus;
+    // HINT: Computed field - null when the animal has never been fed.
+    private Integer daysSinceLastFeeding;
 }

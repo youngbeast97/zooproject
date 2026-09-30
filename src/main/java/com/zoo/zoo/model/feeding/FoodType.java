@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 
 public enum FoodType {
-    COCKROACH, CRICKET, MEALWORM,
+    // HINT: LOCUST is an insect - supplier switched part of the cricket orders to locusts.
+    COCKROACH, CRICKET, MEALWORM, LOCUST,
     MOUSE, RAT, CHICKEN, RABBIT
 }

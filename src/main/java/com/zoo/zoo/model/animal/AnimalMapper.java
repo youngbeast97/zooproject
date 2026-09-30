@@ -1,7 +1,9 @@
 package com.zoo.zoo.model.animal;
 
 import org.springframework.stereotype.Component;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,6 +98,9 @@ public class AnimalMapper {
         response.setHumidity(freshHumidity);
         response.setLastFeedingDate(animal.getLastFeedingDate());
         response.setType(type);
+        response.setDaysSinceLastFeeding(animal.getLastFeedingDate() == null
+                ? null
+                : (int) ChronoUnit.DAYS.between(animal.getLastFeedingDate(), LocalDate.now()));
 
         if (animal.isRequiresLight()) {
             int hour = LocalTime.now().getHour();

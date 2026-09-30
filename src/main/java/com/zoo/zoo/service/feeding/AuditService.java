@@ -22,7 +22,7 @@ public class AuditService {
         log.setEmployeeId(employeeId);
         log.setErrorMessage(message);
         log.setAttemptedFood(food);
-        log.setTimestamp(LocalDateTime.now());
+        log.setOccurredAt(LocalDateTime.now());
         errorRepository.save(log);
     }
 }

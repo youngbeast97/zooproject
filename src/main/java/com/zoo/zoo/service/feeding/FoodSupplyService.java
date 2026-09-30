@@ -9,42 +9,48 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FoodSupplyService {
 
+    static final Period RESTOCK_INTERVAL = Period.ofWeeks(2);
+
     private final FoodInventoryRepository inventoryRepository;
 
-    @Scheduled(cron = "0 */5 * * * *") //tu sie cos pojebalo bo sie okazalo ze do SCHEDULED komp i caly system musi ciagle dzialac a to do dupy
+    // Full restock of every item (demo schedule: every 5 minutes), ignoring RESTOCK_INTERVAL.
+    @Scheduled(cron = "0 */5 * * * *")
     @Transactional
     public void restockFood() {
+        LocalDate today = LocalDate.now();
         List<FoodInventory> inventory = inventoryRepository.findAll();
-        for (FoodInventory item : inventory) {
-            item.setCurrentQuantity(item.getMaxQuantity());
-        }
-
+        inventory.forEach(item -> restock(item, today));
         inventoryRepository.saveAll(inventory);
     }
-//    TODO: sprobowac zrobic ten gowniany scheduled
 
-@Transactional
-public void restockIfNeeded() {
-    List<FoodInventory> inventory = inventoryRepository.findAll();
-    LocalDate today = LocalDate.now();
-
-    for (FoodInventory item : inventory) {
-        LocalDate lastRestock = item.getLastRestockDate();
-        // jeśli brak daty lub minęły 2 tygodnie
-        if (lastRestock == null || lastRestock.plusWeeks(2).isBefore(today) || lastRestock.plusWeeks(2).isEqual(today)) {
-            item.setCurrentQuantity(item.getMaxQuantity());
-            item.setLastRestockDate(today);
-        }
+    // HINT: REFACTOR - "should this item be restocked?" is decided only in isRestockDue(),
+    // HINT: "how is it restocked?" only in restock(). Both public methods share these helpers,
+    // HINT: so a rule added in one helper automatically applies to every restock path that uses it.
+    @Transactional
+    public void restockIfNeeded() {
+        LocalDate today = LocalDate.now();
+        List<FoodInventory> inventory = inventoryRepository.findAll();
+        inventory.stream()
+                .filter(item -> isRestockDue(item, today))
+                .forEach(item -> restock(item, today));
+        inventoryRepository.saveAll(inventory);
     }
 
-    inventoryRepository.saveAll(inventory);
-}
-}
+    boolean isRestockDue(FoodInventory item, LocalDate today) {
+        LocalDate lastRestock = item.getLastRestockDate();
+        return lastRestock == null || !lastRestock.plus(RESTOCK_INTERVAL).isAfter(today);
+    }
 
-
+    private void restock(FoodInventory item, LocalDate today) {
+        item.setCurrentQuantity(item.getMaxQuantity());
+        item.setLastRestockDate(today);
+    }
+}

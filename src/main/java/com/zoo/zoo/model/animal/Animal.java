@@ -14,22 +14,28 @@ import java.time.temporal.ChronoUnit;
 @DiscriminatorColumn(name = "animal_type")
 @Getter @Setter @NoArgsConstructor
 public abstract class Animal {
+    public static final double MAX_HUMIDITY = 100.0;
+    public static final double MIN_HUMIDITY = 0.0;
+    public static final double DAILY_HUMIDITY_LOSS = 1.0;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String species;
     private String name;
-    private Double humidity = 100.0;
+    private Double humidity = MAX_HUMIDITY;
     private LocalDate lastHumidityRefillDate = LocalDate.now();
     private LocalDate lastFeedingDate;
     private boolean isRequiresLight=false;//domyslnie zwierzak nie potrzebuje lampy grzewczej
     public abstract boolean canBeFed(LocalDate currentDate);
 
-    public Double calculateCurrentHumidity(){
-        if(lastHumidityRefillDate==null)return 0.0;
-        long daysPassed= ChronoUnit.DAYS.between(lastHumidityRefillDate,LocalDate.now());
-        double currentHumidity =100.0-daysPassed;
-        return Math.max(0.0,currentHumidity);
+    // HINT: Humidity drops linearly from MAX_HUMIDITY by DAILY_HUMIDITY_LOSS per day since the last refill.
+    // HINT: Other classes (HumidityService, AnimalMapper) rely on these constants and on this method.
+    public Double calculateCurrentHumidity() {
+        if (lastHumidityRefillDate == null) return MIN_HUMIDITY;
+        long daysPassed = ChronoUnit.DAYS.between(lastHumidityRefillDate, LocalDate.now());
+        double currentHumidity = MAX_HUMIDITY - daysPassed * DAILY_HUMIDITY_LOSS;
+        return Math.max(MIN_HUMIDITY, currentHumidity);
     }
 
 }

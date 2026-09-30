@@ -22,7 +22,7 @@ import java.util.List;
 public class AnimalController {
 
     private final AnimalService animalService;
-    private final HumidityService HumidityService;
+    private final HumidityService humidityService;
     private final FeedingService feedingService;
 
     @GetMapping
@@ -43,6 +43,13 @@ public class AnimalController {
     @GetMapping("/venomous")
     public ResponseEntity<List<AnimalResponse>> getAllVenomous() {
         return ResponseEntity.ok(animalService.getVenomous());
+    }
+
+    // HINT: Dashboard list for the night shift - which terrariums have to be sprayed.
+    @GetMapping("/needs-humidity")
+    public ResponseEntity<List<AnimalResponse>> getAnimalsNeedingHumidity(
+            @RequestParam(defaultValue = "50") double threshold) {
+        return ResponseEntity.ok(humidityService.findAnimalsNeedingRefill(threshold));
     }
 
     @GetMapping("/search")
@@ -73,7 +80,7 @@ public class AnimalController {
 
     @PatchMapping("/{id}/refill-humidity")
     public ResponseEntity<Void> refillHumidity(@PathVariable Long id) {
-        HumidityService.refillHumidity(id);
+        humidityService.refillHumidity(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -85,7 +92,7 @@ public class AnimalController {
     @PatchMapping("/{id}/feed-process")
     public ResponseEntity<AnimalResponse> feedAnimal(
             @PathVariable Long id,
-            @RequestBody FeedingRequest request) {
+            @Valid @RequestBody FeedingRequest request) {
         return ResponseEntity.ok(feedingService.feedAnimal(id, request));
     }
 }

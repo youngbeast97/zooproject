@@ -1,6 +1,7 @@
 package com.zoo.zoo.service;
 
 import com.zoo.zoo.exceptions.animal.AnimalWithIDNotFoundException;
+import com.zoo.zoo.exceptions.animal.InvalidFeedingDateException;
 import com.zoo.zoo.exceptions.animal.WeightRequiredForBigReptileException;
 import com.zoo.zoo.model.animal.*;
 import com.zoo.zoo.repository.animal.AnimalRepository;
@@ -161,6 +162,16 @@ class AnimalServiceTests {
         AnimalResponse result = animalService.createSmallReptile(request);
 
         assertEquals("Bubuś", result.getName());
+    }
+
+    @Test
+    void shouldRejectAnimalLastFedMoreThanYearAgo() {
+        AnimalRequest request = new AnimalRequest();
+        request.setName("Stary");
+        request.setLastFeedingDate(LocalDate.now().minusYears(2));
+
+        assertThrows(InvalidFeedingDateException.class, () -> animalService.createSpider(request));
+        verify(animalRepository, never()).save(any());
     }
 
 

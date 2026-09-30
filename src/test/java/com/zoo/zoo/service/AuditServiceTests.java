@@ -54,7 +54,7 @@ class AuditServiceTests {
         assertEquals(employeeId, savedLog.getEmployeeId());
         assertEquals(message, savedLog.getErrorMessage());
         assertEquals(food, savedLog.getAttemptedFood());
-        assertNotNull(savedLog.getTimestamp());
+        assertNotNull(savedLog.getOccurredAt());
     }
 
     @Test
@@ -70,8 +70,8 @@ class AuditServiceTests {
         auditService.logError(1L, 1L, "ERR", "FOOD");
 
         verify(errorLogRepository).save(logCaptor.capture());
-        assertNotNull(logCaptor.getValue().getTimestamp());
-        assertTrue(logCaptor.getValue().getTimestamp().isBefore(LocalDateTime.now().plusMinutes(1)));
+        assertNotNull(logCaptor.getValue().getOccurredAt());
+        assertTrue(logCaptor.getValue().getOccurredAt().isBefore(LocalDateTime.now().plusMinutes(1)));
     }
 
     @Test

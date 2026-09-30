@@ -9,6 +9,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -40,10 +42,7 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public List<EmployeeResponse> getAll() {
-        List<Employee> employees = employeeRepository.findAll().stream()
-                .filter(employee -> employee.getName() != null)
-                .toList();
-        return toResponses(employees);
+        return toResponses(employeeRepository.findAllByNameIsNotNull());
     }
 
     @Transactional(readOnly = true)
@@ -78,9 +77,20 @@ public class EmployeeService {
     }
 
     @Transactional(readOnly = true)
+    public List<EmployeeResponse> getVeterans(int minMonths) {
+        LocalDate cutoff = LocalDate.now().minusMonths(minMonths);
+        return toResponses(employeeRepository.findByHireDateBeforeOrderByHireDateAsc(cutoff));
+    }
+
+    @Transactional(readOnly = true)
     public List<EmployeeResponse> searchByName(String name) {
         List<EmployeeResponse> results = toResponses(employeeRepository.findByNameContainingIgnoreCase(name));
         return results.size() > 50 ? results.subList(0, 50) : results;
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmployeeResponse> getHiredAfter(LocalDate date) {
+        return toResponses(employeeRepository.findByHireDateAfterOrderByHireDateAsc(date));
     }
 
     private void validateDepartment(EmployeeRequest request) {

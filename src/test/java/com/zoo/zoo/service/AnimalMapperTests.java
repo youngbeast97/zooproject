@@ -179,4 +179,14 @@ class AnimalMapperTests {
 
         assertDoesNotThrow(() -> mapper.toResponseList(animals));
     }
+
+    @Test
+    void shouldCalculateDaysSinceLastFeeding() {
+        Spider spider = new Spider();
+        spider.setLastFeedingDate(java.time.LocalDate.now().minusDays(4));
+
+        AnimalResponse response = mapper.territoryToResponse(spider);
+
+        assertEquals(4, response.getDaysSinceLastFeeding());
+    }
 }

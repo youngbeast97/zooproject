@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -39,32 +40,48 @@ public class AnimalService {
         return animalMapper.toResponseList(animalRepository.findByNameContainingIgnoreCase(name));
     }
 
+    // HINT: Every create* method follows the same phases: validate request -> map -> save -> map response.
+    // HINT: Request validation must happen before anything touches the repository.
+    @Transactional
     public AnimalResponse createSpider(AnimalRequest request) {
+        validateFeedingDate(request);
         Spider spider = animalMapper.toSpider(request);
         return animalMapper.territoryToResponse(animalRepository.save(spider));
     }
 
+    @Transactional
     public AnimalResponse createSmallReptile(AnimalRequest request) {
+        validateFeedingDate(request);
         SmallReptile reptile = animalMapper.toSmallReptile(request);
         return animalMapper.territoryToResponse(animalRepository.save(reptile));
     }
-    public AnimalWithWeightResponse createBigReptile(AnimalWithWeightRequest request) {
-        BigReptile reptile = animalMapper.toBigReptile(request);
-        Animal saved = animalRepository.save(reptile);
 
-        if(animalMapper.territoryToResponse(saved)instanceof AnimalWithWeightResponse weightResponse){
-            return weightResponse;
-        }
-        throw new WeightRequiredForBigReptileException("Mapping error: Expected weight response for BigReptile");
+    @Transactional
+    public AnimalWithWeightResponse createBigReptile(AnimalWithWeightRequest request) {
+        validateFeedingDate(request);
+        BigReptile reptile = animalMapper.toBigReptile(request);
+        return toWeightResponse(animalRepository.save(reptile), "BigReptile");
     }
 
+    @Transactional
     public AnimalWithWeightResponse createVenomousReptile(AnimalWithWeightRequest request) {
+        validateFeedingDate(request);
         VenomousReptile reptile = animalMapper.toVenomousReptile(request);
-        Animal saved = animalRepository.save(reptile);
+        return toWeightResponse(animalRepository.save(reptile), "VenomousReptile");
+    }
+
+    private AnimalWithWeightResponse toWeightResponse(Animal saved, String label) {
         if (animalMapper.territoryToResponse(saved) instanceof AnimalWithWeightResponse weightResponse) {
             return weightResponse;
         }
-        throw new WeightRequiredForBigReptileException("Mapping error: Expected weight response for VenomousReptile");
+        throw new WeightRequiredForBigReptileException("Mapping error: Expected weight response for " + label);
+    }
+
+    private void validateFeedingDate(AnimalRequest request) {
+        LocalDate lastFeeding = request.getLastFeedingDate();
+        if (lastFeeding != null && lastFeeding.isBefore(LocalDate.now().minusYears(1))) {
+            throw new InvalidFeedingDateException("Last feeding date " + lastFeeding + " is more than a year ago - check the data");
+        }
     }
 
 

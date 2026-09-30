@@ -8,10 +8,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -48,9 +50,11 @@ public class EmployeeController {
         return ResponseEntity.noContent().build();
     }
 
+    // HINT: REST convention used across this API: a successful DELETE answers 204 No Content (see deleteEmployee).
     @DeleteMapping("/delete-all")
-    public void deleteAll() {
+    public ResponseEntity<Void> deleteAll() {
         employeeService.deleteAll();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/type/{type}")
@@ -61,6 +65,12 @@ public class EmployeeController {
     @GetMapping("/search")
     public List<EmployeeResponse> searchByName(@RequestParam String name) {
         return employeeService.searchByName(name);
+    }
+
+    // HINT: HR report: employees hired after a given date (ISO format, e.g. 2026-01-31).
+    @GetMapping("/hired-after")
+    public List<EmployeeResponse> getHiredAfter(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return employeeService.getHiredAfter(date);
     }
 
     @GetMapping("/count")
