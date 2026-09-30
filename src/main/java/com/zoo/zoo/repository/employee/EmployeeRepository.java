@@ -10,4 +10,6 @@ import java.util.List;
     List<Employee> findByEmployeeType(EmployeeType type);
 
     List<Employee> findByNameContainingIgnoreCase(String name);
+
+    long countByNameIsNotNull();
 }

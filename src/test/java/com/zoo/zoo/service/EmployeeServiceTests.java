@@ -221,4 +221,14 @@ class EmployeeServiceTests {
         assertEquals(response, result);
         verify(employeeRepository).save(employee);
     }
+
+    @Test
+    void shouldCountEmployeesInDatabaseWithoutLoadingThem() {
+        when(employeeRepository.countByNameIsNotNull()).thenReturn(42L);
+
+        long result = employeeService.count();
+
+        assertEquals(42L, result);
+        verify(employeeRepository, never()).findAll();
+    }
 }

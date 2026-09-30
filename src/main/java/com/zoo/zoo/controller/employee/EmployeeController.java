@@ -5,6 +5,7 @@ import com.zoo.zoo.model.employee.EmployeeResponse;
 import com.zoo.zoo.model.employee.EmployeeType;
 import com.zoo.zoo.service.employee.EmployeeService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ public class EmployeeController {
     }
 
     @PatchMapping("/{id}/department")
-    public EmployeeResponse transferDepartment(@PathVariable Long id, @RequestParam String department) {
+    public EmployeeResponse transferDepartment(@PathVariable Long id, @RequestParam @NotBlank String department) {
         return employeeService.transferDepartment(id, department);
     }
 
@@ -64,6 +65,6 @@ public class EmployeeController {
 
     @GetMapping("/count")
     public long count() {
-        return employeeService.getAll().size();
+        return employeeService.count();
     }
 }

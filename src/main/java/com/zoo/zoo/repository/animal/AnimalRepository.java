@@ -9,7 +9,7 @@ import java.util.List;
 public interface AnimalRepository extends JpaRepository<Animal, Long> {
     List<Animal> findByNameContainingIgnoreCase(String name);
 
-    @Query("SELECT a FROM Spiderek a")
+    @Query("SELECT a FROM Spider a")
     List<Animal> findAllSpiders();
     @Query("SELECT a FROM VenomousReptile a")
     List<Animal> findAllVenomous();

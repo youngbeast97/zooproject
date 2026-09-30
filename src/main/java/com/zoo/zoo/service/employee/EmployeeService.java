@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -43,6 +44,11 @@ public class EmployeeService {
                 .filter(employee -> employee.getName() != null)
                 .toList();
         return toResponses(employees);
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return employeeRepository.countByNameIsNotNull();
     }
 
     @Transactional(readOnly = true)
