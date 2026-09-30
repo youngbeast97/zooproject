@@ -221,20 +221,22 @@ class AnimalServiceTests {
 
     @Test
     void humidityShouldDecreaseDaily() {
-        spider.setLastHumidityRefillDate(LocalDate.now().minusDays(10));
-        assertEquals(90.0, spider.calculateCurrentHumidity());
+        LocalDate today = LocalDate.of(2026, 3, 20);
+        spider.setLastHumidityRefillDate(today.minusDays(10));
+        assertEquals(90.0, spider.calculateCurrentHumidity(today));
     }
 
     @Test
     void humidityShouldNotBeNegative() {
-        spider.setLastHumidityRefillDate(LocalDate.now().minusDays(200));
-        assertEquals(0.0, spider.calculateCurrentHumidity());
+        LocalDate today = LocalDate.of(2026, 3, 20);
+        spider.setLastHumidityRefillDate(today.minusDays(200));
+        assertEquals(0.0, spider.calculateCurrentHumidity(today));
     }
 
     @Test
     void humidityShouldBeZeroWhenDateIsNull() {
         spider.setLastHumidityRefillDate(null);
-        assertEquals(0.0, spider.calculateCurrentHumidity());
+        assertEquals(0.0, spider.calculateCurrentHumidity(LocalDate.of(2026, 3, 20)));
     }
 
     @Test

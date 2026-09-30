@@ -95,10 +95,11 @@ class HumidityServiceTests {
 
     @Test
     void shouldCalculateCurrentHumidityCorrectly() {
+        LocalDate today = LocalDate.of(2026, 1, 15);
         Spider spider = new Spider();
-        spider.setLastHumidityRefillDate(LocalDate.now().minusDays(10));
+        spider.setLastHumidityRefillDate(today.minusDays(10));
 
-        double currentHumidity = spider.calculateCurrentHumidity();
+        double currentHumidity = spider.calculateCurrentHumidity(today);
         assertEquals(90.0, currentHumidity);
     }
 
