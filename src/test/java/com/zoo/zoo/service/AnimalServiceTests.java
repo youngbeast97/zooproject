@@ -245,4 +245,17 @@ class AnimalServiceTests {
         Spider result = localMapper.toSpider(req);
         assertEquals("Gienek", result.getName());
     }
+
+    @Test
+    void shouldReturnOnlyAnimalsThatCanBeFed() {
+        spider.setLastFeedingDate(LocalDate.now().minusDays(20));
+        smallReptile.setLastFeedingDate(LocalDate.now().minusDays(1));
+
+        when(animalRepository.findAll()).thenReturn(List.of(spider, smallReptile));
+        when(animalMapper.toResponseList(List.of(spider))).thenReturn(List.of(spiderResponse));
+
+        List<AnimalResponse> result = animalService.getHungryAnimals();
+
+        assertEquals(List.of(spiderResponse), result);
+    }
 }

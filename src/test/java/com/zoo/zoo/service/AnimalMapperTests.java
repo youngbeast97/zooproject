@@ -179,4 +179,16 @@ class AnimalMapperTests {
 
         assertDoesNotThrow(() -> mapper.toResponseList(animals));
     }
+
+    @Test
+    void shouldMarkDrySpiderAsReadyForFeedingWithLowHumidity() {
+        Spider spider = new Spider();
+        spider.setLastFeedingDate(java.time.LocalDate.now().minusDays(30));
+        spider.setLastHumidityRefillDate(java.time.LocalDate.now().minusDays(60));
+
+        AnimalResponse response = mapper.territoryToResponse(spider);
+
+        assertTrue(response.getReadyForFeeding());
+        assertEquals("LOW", response.getHumidityStatus());
+    }
 }
