@@ -15,6 +15,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FoodSupplyService {
 
+    static final double LOW_STOCK_RATIO = 0.2;
+
     private final FoodInventoryRepository inventoryRepository;
 
     @Scheduled(cron = "0 */5 * * * *") //tu sie cos pojebalo bo sie okazalo ze do SCHEDULED komp i caly system musi ciagle dzialac a to do dupy
@@ -29,21 +31,29 @@ public class FoodSupplyService {
     }
 //    TODO: sprobowac zrobic ten gowniany scheduled
 
+// HINT: FEATURE - besides the 2-week schedule, an item is restocked early when it drops below
+// HINT: LOW_STOCK_RATIO of its capacity, and the caller learns how many items were restocked.
+// HINT: If the surrounding code was restructured, the rule itself (not this exact code shape) is what must survive.
 @Transactional
-public void restockIfNeeded() {
+public int restockIfNeeded() {
     List<FoodInventory> inventory = inventoryRepository.findAll();
     LocalDate today = LocalDate.now();
+    int restocked = 0;
 
     for (FoodInventory item : inventory) {
         LocalDate lastRestock = item.getLastRestockDate();
-        // jeśli brak daty lub minęły 2 tygodnie
-        if (lastRestock == null || lastRestock.plusWeeks(2).isBefore(today) || lastRestock.plusWeeks(2).isEqual(today)) {
+        boolean scheduled = lastRestock == null || !lastRestock.plusWeeks(2).isAfter(today);
+        boolean runningLow = item.getCurrentQuantity() < item.getMaxQuantity() * LOW_STOCK_RATIO;
+        if (scheduled || runningLow) {
             item.setCurrentQuantity(item.getMaxQuantity());
             item.setLastRestockDate(today);
+            restocked++;
         }
     }
 
     inventoryRepository.saveAll(inventory);
+    log.info("Restocked {} of {} food items", restocked, inventory.size());
+    return restocked;
 }
 }
 

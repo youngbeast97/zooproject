@@ -55,7 +55,7 @@ class FoodSupplyServiceTests {
     void shouldNotRestockWhenFoodIsFresh() {
         LocalDate weekAgo = LocalDate.now().minusWeeks(1);
         FoodInventory item = new FoodInventory();
-        item.setCurrentQuantity(5);
+        item.setCurrentQuantity(50);
         item.setMaxQuantity(100);
         item.setLastRestockDate(weekAgo);
 
@@ -63,7 +63,7 @@ class FoodSupplyServiceTests {
 
         foodSupplyService.restockIfNeeded();
 
-        assertEquals(5, item.getCurrentQuantity());
+        assertEquals(50, item.getCurrentQuantity());
         verify(inventoryRepository).saveAll(anyList());
     }
 
