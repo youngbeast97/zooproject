@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,26 +49,25 @@ class AnimalRequestValidationTests {
         return request;
     }
 
-    @Test
-    void shouldAcceptValidRequest() {
-        assertTrue(validator.validate(validRequest()).isEmpty());
-    void shouldAcceptPolishSpeciesName() {
-        assertTrue(validator.validate(request("Tuptuś", "Ptasznik różowy")).isEmpty());
-    }
+            @Test
+            void shouldAcceptValidRequest() {
+                assertTrue(validator.validate(validRequest()).isEmpty());
+                void shouldAcceptPolishSpeciesName() {
+                    assertTrue(validator.validate(request("Tuptuś", "Ptasznik różowy")).isEmpty());
+                }
 
-    @Test
-    void shouldRejectSingleLetterName() {
-        AnimalRequest request = validRequest();
-        request.setName("X");
+                @Test
+                void shouldRejectSingleLetterName() {
+                    AnimalRequest request = validRequest();
+                    request.setName("X");
 
-        Set<ConstraintViolation<AnimalRequest>> violations = validator.validate(request);
-    void shouldRejectNameLongerThanThirtyCharacters() {
-        Set<ConstraintViolation<AnimalRequest>> violations = validator.validate(request("A".repeat(31), "Ptasznik"));
+                    Set<ConstraintViolation<AnimalRequest>> violations = validator.validate(request);
+                    void shouldRejectNameLongerThanThirtyCharacters() {
+                        Set<ConstraintViolation<AnimalRequest>> violations = validator.validate(request("A".repeat(31), "Ptasznik"));
 
-        assertEquals(1, violations.size());
-        assertEquals("name", violations.iterator().next().getPropertyPath().toString());
-    }
-
+                        assertEquals(1, violations.size());
+                        assertEquals("name", violations.iterator().next().getPropertyPath().toString());
+                    }
     @Test
     void shouldAcceptNameWithFortyCharacters() {
         AnimalRequest request = validRequest();
