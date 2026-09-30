@@ -24,6 +24,10 @@ public class FoodSupplyService {
     public void restockFood() {
         List<FoodInventory> inventory = inventoryRepository.findAll();
         for (FoodInventory item : inventory) {
+            if (item.getMaxQuantity() == null) {
+                log.warn("Skipping {}: max quantity not configured", item.getFoodType());
+                continue;
+            }
             item.setCurrentQuantity(item.getMaxQuantity());
         }
 
@@ -41,6 +45,12 @@ public int restockIfNeeded() {
     int restocked = 0;
 
     for (FoodInventory item : inventory) {
+        // HINT: Rows imported from the old warehouse system have no max quantity - they must be skipped
+        // HINT: by BOTH restock paths (scheduled restockFood and restockIfNeeded).
+        if (item.getMaxQuantity() == null) {
+            log.warn("Skipping {}: max quantity not configured", item.getFoodType());
+            continue;
+        }
         LocalDate lastRestock = item.getLastRestockDate();
         boolean scheduled = lastRestock == null || !lastRestock.plusWeeks(2).isAfter(today);
         boolean runningLow = item.getCurrentQuantity() < item.getMaxQuantity() * LOW_STOCK_RATIO;
