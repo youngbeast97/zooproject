@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -33,6 +34,15 @@ public class AnimalService {
 
     public List<AnimalResponse> getVenomous() {
         return animalMapper.toResponseList(animalRepository.findAllVenomous());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AnimalResponse> getHungryAnimals() {
+        LocalDate today = LocalDate.now();
+        List<Animal> hungry = animalRepository.findAll().stream()
+                .filter(animal -> animal.canBeFed(today))
+                .toList();
+        return animalMapper.toResponseList(hungry);
     }
 
     public List<AnimalResponse> findByName(String name) {

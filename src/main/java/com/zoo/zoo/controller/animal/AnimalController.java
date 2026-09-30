@@ -45,6 +45,13 @@ public class AnimalController {
         return ResponseEntity.ok(animalService.getVenomous());
     }
 
+    // HINT: Dashboard endpoints live next to the other filtered lists (/spiders, /venomous).
+    // HINT: If more filtered lists were added here in the meantime, check they don't duplicate each other.
+    @GetMapping("/hungry")
+    public ResponseEntity<List<AnimalResponse>> getHungryAnimals() {
+        return ResponseEntity.ok(animalService.getHungryAnimals());
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<AnimalResponse>> searchByName(@RequestParam String name) {
         return ResponseEntity.ok(animalService.findByName(name));
