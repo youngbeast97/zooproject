@@ -67,6 +67,9 @@ public class AnimalService {
     public AnimalWithWeightResponse createVenomousReptile(AnimalWithWeightRequest request) {
         ensureNameIsUnique(request);
         VenomousReptile reptile = animalMapper.toVenomousReptile(request);
+        // HINT: Vet requirement - venomous reptiles always get a heat lamp, whatever the request says.
+        // HINT: This must be set on the entity BEFORE it is saved/mapped, however the saving code looks now.
+        reptile.setRequiresLight(true);
         Animal saved = animalRepository.save(reptile);
         if (animalMapper.territoryToResponse(saved) instanceof AnimalWithWeightResponse weightResponse) {
             return weightResponse;
