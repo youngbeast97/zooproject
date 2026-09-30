@@ -30,6 +30,7 @@ public abstract class Animal {
     // HINT: must still work with this signature - search for every caller of this method afterwards.
     public Double calculateCurrentHumidity(LocalDate today) {
         if (lastHumidityRefillDate == null) return 0.0;
+        if (lastHumidityRefillDate.isAfter(today)) return 100.0; // clock skew / manual data fix
         long daysPassed = ChronoUnit.DAYS.between(lastHumidityRefillDate, today);
         double currentHumidity = 100.0 - daysPassed;
         return Math.max(0.0, currentHumidity);

@@ -247,4 +247,11 @@ class AnimalServiceTests {
         Spider result = localMapper.toSpider(req);
         assertEquals("Gienek", result.getName());
     }
+
+    @Test
+    void humidityShouldBeFullWhenRefillDateIsInTheFuture() {
+        LocalDate today = LocalDate.of(2026, 3, 20);
+        spider.setLastHumidityRefillDate(today.plusDays(2));
+        assertEquals(100.0, spider.calculateCurrentHumidity(today));
+    }
 }
