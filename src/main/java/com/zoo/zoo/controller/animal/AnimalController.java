@@ -90,7 +90,7 @@ public class AnimalController {
     @PostMapping("/{id}/feedings")
     public ResponseEntity<FeedingResponse> feedAnimal(
             @PathVariable Long id,
-            @RequestBody FeedingRequest request) {
+            @Valid @RequestBody FeedingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(feedingService.feedAnimal(id, request));
     }
 }
