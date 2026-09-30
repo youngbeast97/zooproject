@@ -42,7 +42,8 @@ class FoodSupplyServiceTests {
         List<FoodInventory> inventory = Arrays.asList(item1, item2);
         when(inventoryRepository.findAll()).thenReturn(inventory);
 
-        foodSupplyService.restockIfNeeded();
+        int restocked = foodSupplyService.restockIfNeeded();
+        assertEquals(2, restocked);
         for (FoodInventory item : inventory) {
             assert (item.getCurrentQuantity() == item.getMaxQuantity());
             assert (item.getLastRestockDate()
@@ -78,5 +79,33 @@ class FoodSupplyServiceTests {
 
         assertEquals(50, item.getCurrentQuantity());
         verify(inventoryRepository).saveAll(anyList());
+    }
+
+    @Test
+    void shouldRestockFreshItemWhenRunningLow() {
+        FoodInventory item = new FoodInventory();
+        item.setCurrentQuantity(1);
+        item.setMaxQuantity(100);
+        item.setLastRestockDate(LocalDate.now().minusDays(2));
+        when(inventoryRepository.findAll()).thenReturn(List.of(item));
+
+        int restocked = foodSupplyService.restockIfNeeded();
+
+        assertEquals(1, restocked);
+        assertEquals(100, item.getCurrentQuantity());
+    }
+
+    @Test
+    void shouldSkipItemsWithoutMaxQuantity() {
+        FoodInventory item = new FoodInventory();
+        item.setCurrentQuantity(3);
+        item.setMaxQuantity(null);
+        when(inventoryRepository.findAll()).thenReturn(List.of(item));
+
+        foodSupplyService.restockFood();
+        int restocked = foodSupplyService.restockIfNeeded();
+
+        assertEquals(0, restocked);
+        assertEquals(3, item.getCurrentQuantity());
     }
 }
