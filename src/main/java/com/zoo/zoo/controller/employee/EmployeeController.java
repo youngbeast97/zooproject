@@ -63,6 +63,14 @@ public class EmployeeController {
         return employeeService.searchByName(name);
     }
 
+    // HINT: Endpoints for filtered employee lists are grouped here, next to /search.
+    // HINT: Check that no two mappings end up with the same path + HTTP method, and that
+    // HINT: literal paths don't get swallowed by the "/{id}" mapping above.
+    @GetMapping("/department/{department}")
+    public List<EmployeeResponse> getByDepartment(@PathVariable String department) {
+        return employeeService.getByDepartment(department);
+    }
+
     @GetMapping("/count")
     public long count() {
         return employeeService.count();

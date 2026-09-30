@@ -83,6 +83,11 @@ public class EmployeeService {
         return results.size() > 50 ? results.subList(0, 50) : results;
     }
 
+    @Transactional(readOnly = true)
+    public List<EmployeeResponse> getByDepartment(String department) {
+        return toResponses(employeeRepository.findByDepartmentIgnoreCaseOrderByNameAsc(department.trim()));
+    }
+
     private void validateDepartment(EmployeeRequest request) {
         if (request.getDepartment() == null || request.getDepartment().isBlank()) {
             throw new IllegalArgumentException("Department is required");

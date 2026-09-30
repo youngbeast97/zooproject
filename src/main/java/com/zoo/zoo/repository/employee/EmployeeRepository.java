@@ -12,4 +12,6 @@ import java.util.List;
     List<Employee> findByNameContainingIgnoreCase(String name);
 
     long countByNameIsNotNull();
+
+    List<Employee> findByDepartmentIgnoreCaseOrderByNameAsc(String department);
 }
