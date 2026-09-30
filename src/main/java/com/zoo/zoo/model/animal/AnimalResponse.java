@@ -19,4 +19,9 @@ public class AnimalResponse {
     private LocalDate lastFeedingDate;
     private String type;
     private String lightStatus;
+    // HINT: New read-only fields computed by AnimalMapper for the keepers' dashboard.
+    // HINT: Keep JSON naming/format consistent with the other date/number fields of this DTO,
+    // HINT: and make sure every field declared here is actually filled in AnimalMapper.fillCommonFields.
+    private Boolean readyForFeeding;
+    private String humidityStatus;
 }

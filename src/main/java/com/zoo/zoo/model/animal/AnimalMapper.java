@@ -1,12 +1,15 @@
 package com.zoo.zoo.model.animal;
 
 import org.springframework.stereotype.Component;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class AnimalMapper {
+
+    public static final double LOW_HUMIDITY_THRESHOLD = 50.0;
 
     public Spider toSpider(AnimalRequest request) {
         if (request == null) return null;
@@ -96,6 +99,9 @@ public class AnimalMapper {
         response.setHumidity(freshHumidity);
         response.setLastFeedingDate(animal.getLastFeedingDate());
         response.setType(type);
+        // HINT: canBeFed() is implemented differently per subclass (Spider, SmallReptile, BigReptile...).
+        response.setReadyForFeeding(animal.canBeFed(LocalDate.now()));
+        response.setHumidityStatus(freshHumidity < LOW_HUMIDITY_THRESHOLD ? "LOW" : "OK");
 
         if (animal.isRequiresLight()) {
             int hour = LocalTime.now().getHour();
