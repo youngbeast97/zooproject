@@ -7,8 +7,8 @@ import com.zoo.zoo.model.animal.*;
 import com.zoo.zoo.model.employee.Employee;
 import com.zoo.zoo.model.employee.EmployeeType;
 import com.zoo.zoo.model.feeding.FeedingRequest;
+import com.zoo.zoo.model.feeding.FoodCategory;
 import com.zoo.zoo.model.feeding.FoodInventory;
-import com.zoo.zoo.model.feeding.FoodType;
 import com.zoo.zoo.repository.animal.AnimalRepository;
 import com.zoo.zoo.repository.employee.EmployeeRepository;
 import com.zoo.zoo.repository.food.FoodInventoryRepository;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -80,51 +79,39 @@ public class FeedingService {
         return employee;
     }
 
+    // HINT: REFACTOR - the rules below used to be hard-coded instanceof chains; now the animal decides.
+    // HINT: Every rule that exists on the other side of this conflict (roles, food types, portion ranges,
+    // HINT: portion counts...) must still be enforced after the merge - either here or in the model classes.
+    // HINT: Make a list of the rules from both sides and of the tests in FeedingServiceTests that cover them.
     private void validatePermissions(Employee employee, Animal animal) {
         EmployeeType role = employee.getEmployeeType();
+        EmployeeType required = animal.getMinimumCaretakerLevel();
 
-        if (animal instanceof VenomousReptile && role != EmployeeType.BOSS) {
-            throw new IncorrectEmployeeFeedingException("UNAUTHORIZED: Only BOSS can feed venomous reptiles!");
-        }
-        if (animal instanceof BigReptile && role == EmployeeType.STUDENT) {
-            throw new IncorrectEmployeeFeedingException("UNAUTHORIZED: Students cannot feed big reptiles!");
+        if (!role.isAtLeast(required)) {
+            throw new IncorrectEmployeeFeedingException(String.format(
+                    "UNAUTHORIZED: %s cannot feed %s (requires %s)",
+                    role, animal.getClass().getSimpleName(), required));
         }
     }
+
     private void validateDietAndWeight(Animal animal, FeedingRequest request) {
-        List<FoodType> insects = List.of(FoodType.COCKROACH, FoodType.CRICKET, FoodType.MEALWORM);
-        List<FoodType> meat = List.of(FoodType.MOUSE, FoodType.RAT, FoodType.CHICKEN, FoodType.RABBIT);
-
-        if (animal instanceof Spider || animal instanceof SmallReptile) {
-            if (!insects.contains(request.getFoodType())) {
-                throw new IncorrectFoodMatchedToAnimal("This animal eats only insects!");
-            }
-            return;
+        FoodCategory offered = request.getFoodType().getCategory();
+        if (offered != animal.getDiet()) {
+            throw new IncorrectFoodMatchedToAnimal(String.format(
+                    "%s eats %s, not %s!", animal.getClass().getSimpleName(), animal.getDiet(), request.getFoodType()));
         }
 
-        if (!meat.contains(request.getFoodType())) {
-            throw new IncorrectFoodMatchedToAnimal("Large/Venomous reptiles require meat not worms!");
-        }
-
-        Integer animalWeight = getAnimalWeight(animal);
+        int animalWeight = animal.getBodyWeightInGrams();
         if (animalWeight > 0) {
-            double min = animalWeight * 0.08;
-            double max = animalWeight * 0.15;
+            double min = animalWeight * animal.getMinFoodRatio();
+            double max = animalWeight * animal.getMaxFoodRatio();
 
             if (request.getFoodWeightInGrams() < min || request.getFoodWeightInGrams() > max) {
                 throw new IncorrectWeightOfFoodException(String.format(
-                        "Food (%dg) must be 8-15%% of animal mass (%dg). Range: [%.0fg - %.0fg]",
-                        request.getFoodWeightInGrams(), animalWeight, min, max));
+                        "Food (%dg) must be %.0f-%.0f%% of animal mass (%dg). Range: [%.0fg - %.0fg]",
+                        request.getFoodWeightInGrams(), animal.getMinFoodRatio() * 100, animal.getMaxFoodRatio() * 100,
+                        animalWeight, min, max));
             }
         }
-    }
-
-    private Integer getAnimalWeight(Animal animal) {
-        if (animal instanceof BigReptile br) {
-            return br.getWeightInGrams();
-        }
-        if (animal instanceof VenomousReptile vr){
-            return vr.getWeightInGrams();
-        }
-        return 0;
     }
 }

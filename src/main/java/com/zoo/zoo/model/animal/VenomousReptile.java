@@ -1,5 +1,7 @@
 package com.zoo.zoo.model.animal;
 
+import com.zoo.zoo.model.employee.EmployeeType;
+import com.zoo.zoo.model.feeding.FoodCategory;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.Min;
@@ -22,6 +24,21 @@ public class VenomousReptile extends Animal{
     public boolean canBeFed(LocalDate currentDate) {
         if(getLastFeedingDate()==null)return true;
         return !currentDate.isBefore(getLastFeedingDate().plusMonths(1));
+    }
+
+    @Override
+    public FoodCategory getDiet() {
+        return FoodCategory.MEAT;
+    }
+
+    @Override
+    public EmployeeType getMinimumCaretakerLevel() {
+        return EmployeeType.BOSS;
+    }
+
+    @Override
+    public int getBodyWeightInGrams() {
+        return weightInGrams == null ? 0 : weightInGrams;
     }
 
 }

@@ -1,5 +1,6 @@
 package com.zoo.zoo.model.animal;
 
+import com.zoo.zoo.model.feeding.FoodCategory;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import lombok.Getter;
@@ -20,5 +21,10 @@ public class SmallReptile extends Animal {
         if (getLastFeedingDate() == null) return true;
         return !getLastFeedingDate().plusDays(7)
                 .isAfter(today);
+    }
+
+    @Override
+    public FoodCategory getDiet() {
+        return FoodCategory.INSECT;
     }
 }

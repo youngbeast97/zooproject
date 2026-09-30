@@ -1,5 +1,6 @@
 package com.zoo.zoo.model.animal;
 
+import com.zoo.zoo.model.feeding.FoodCategory;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import lombok.Getter;
@@ -16,6 +17,11 @@ public class Spider extends Animal {
     public boolean canBeFed(LocalDate currentDate) {
         if (getLastFeedingDate() == null) return true;
         return !currentDate.isBefore(getLastFeedingDate().plusWeeks(2));
+    }
+
+    @Override
+    public FoodCategory getDiet() {
+        return FoodCategory.INSECT;
     }
 
 }
