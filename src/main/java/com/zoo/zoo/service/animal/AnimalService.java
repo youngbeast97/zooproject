@@ -39,16 +39,22 @@ public class AnimalService {
         return animalMapper.toResponseList(animalRepository.findByNameContainingIgnoreCase(name));
     }
 
+    // HINT: Business rule: two animals of the same species must not share a name (keepers identify them by name).
+    // HINT: The check has to run before anything is persisted, in EVERY create* method - including any
+    // HINT: validation that other create* changes introduce. Compare with AnimalServiceTests.
     public AnimalResponse createSpider(AnimalRequest request) {
+        ensureNameIsUnique(request);
         Spider spider = animalMapper.toSpider(request);
         return animalMapper.territoryToResponse(animalRepository.save(spider));
     }
 
     public AnimalResponse createSmallReptile(AnimalRequest request) {
+        ensureNameIsUnique(request);
         SmallReptile reptile = animalMapper.toSmallReptile(request);
         return animalMapper.territoryToResponse(animalRepository.save(reptile));
     }
     public AnimalWithWeightResponse createBigReptile(AnimalWithWeightRequest request) {
+        ensureNameIsUnique(request);
         BigReptile reptile = animalMapper.toBigReptile(request);
         Animal saved = animalRepository.save(reptile);
 
@@ -59,6 +65,7 @@ public class AnimalService {
     }
 
     public AnimalWithWeightResponse createVenomousReptile(AnimalWithWeightRequest request) {
+        ensureNameIsUnique(request);
         VenomousReptile reptile = animalMapper.toVenomousReptile(request);
         Animal saved = animalRepository.save(reptile);
         if (animalMapper.territoryToResponse(saved) instanceof AnimalWithWeightResponse weightResponse) {
@@ -68,6 +75,13 @@ public class AnimalService {
     }
 
 
+
+    private void ensureNameIsUnique(AnimalRequest request) {
+        if (animalRepository.existsByNameIgnoreCaseAndSpeciesIgnoreCase(request.getName(), request.getSpecies())) {
+            throw new DuplicateAnimalException(
+                    "Animal named '" + request.getName() + "' of species '" + request.getSpecies() + "' already exists");
+        }
+    }
 
     public void delete(Long id) {
         if (!animalRepository.existsById(id)) {
