@@ -40,7 +40,9 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public List<EmployeeResponse> getAll() {
-        List<Employee> employees = employeeRepository.findAll().stream()
+        // HINT: Two filters apply to the employee list: soft-deleted rows and legacy rows without a name.
+        // HINT: Decide where each filter should run (DB vs. stream) and check which repository methods remain unused.
+        List<Employee> employees = employeeRepository.findByActiveTrue().stream()
                 .filter(employee -> employee.getName() != null)
                 .toList();
         return toResponses(employees);
@@ -48,7 +50,7 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public long count() {
-        return employeeRepository.countByNameIsNotNull();
+        return employeeRepository.countByActiveTrueAndNameIsNotNull();
     }
 
     @Transactional(readOnly = true)
@@ -60,10 +62,9 @@ public class EmployeeService {
     @Transactional
     @CacheEvict(value = EMPLOYEES_CACHE, key = "#id")
     public void delete(Long id) {
-        if (!employeeRepository.existsById(id)) {
-            throw new EmployeeWithIDNotFoundException("Employee with id " + id + " not found");
-        }
-        employeeRepository.deleteById(id);
+        Employee employee = findEmployeeOrThrow(id);
+        employee.setActive(false);
+        employeeRepository.save(employee);
     }
 
     @Transactional
@@ -90,7 +91,7 @@ public class EmployeeService {
     }
 
     private Employee findEmployeeOrThrow(Long id) {
-        return employeeRepository.findById(id)
+        return employeeRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new EmployeeWithIDNotFoundException("Employee with id " + id + " not found"));
     }
 
