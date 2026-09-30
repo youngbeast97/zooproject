@@ -48,9 +48,15 @@ public class EmployeeController {
         return ResponseEntity.noContent().build();
     }
 
+    // HINT: Wiping the whole employees table by accident is expensive, so the caller has to opt in
+    // HINT: explicitly. Think about which status code a client gets in each case (confirmed / not confirmed).
     @DeleteMapping("/delete-all")
-    public void deleteAll() {
+    public ResponseEntity<Void> deleteAll(@RequestParam(defaultValue = "false") boolean confirm) {
+        if (!confirm) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).build();
+        }
         employeeService.deleteAll();
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/type/{type}")
